@@ -1,6 +1,17 @@
 package fi.dy.masa.litematica.render;
 
 import javax.annotation.Nullable;
+
+import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
+import com.mojang.blaze3d.framegraph.FramePass;
+import com.mojang.blaze3d.resource.ResourceHandle;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import com.mojang.renderpearl.api.textures.FilterMode;
+import com.mojang.renderpearl.api.textures.GpuSampler;
+import com.mojang.renderpearl.api.textures.GpuTextureView;
+import fi.dy.masa.litematica.mixin.render.IMixinGameRenderer;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import org.apache.logging.log4j.Logger;
 import org.joml.Matrix4fc;
 
@@ -29,12 +40,15 @@ import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
 import fi.dy.masa.litematica.util.invoker.IEntityHitboxDebugRendererInvoker;
 import fi.dy.masa.litematica.world.WorldSchematic;
 
+import java.util.Optional;
+import java.util.OptionalDouble;
+
 public class LitematicaRenderer
 {
     private static final LitematicaRenderer INSTANCE = new LitematicaRenderer();
     private static final Logger LOGGER = Litematica.LOGGER;
 
-    private Minecraft mc;
+    private Minecraft mc = Minecraft.getInstance();
     private IWorldSchematicRenderer worldRenderer;
     private Camera camera;
     private Frustum frustum;
@@ -46,6 +60,7 @@ public class LitematicaRenderer
     private boolean renderPiecewiseEntities;
     private boolean renderPiecewiseTileEntities;
     private boolean renderEntityDebugHitboxes;
+    private final RenderTarget litematicaRenderTarget = new LitematicaTarget(mc.getWindow().getWidth(), mc.getWindow().getHeight());
 
     public static LitematicaRenderer getInstance()
     {
@@ -116,6 +131,36 @@ public class LitematicaRenderer
         }
     }
 
+    public static ResourceHandle<? extends RenderTarget> target = null;
+
+    public void beforeClearDepth() {
+        if (mc.level == null) { return; }
+        GpuTextureView litematicaColorTexture = this.litematicaRenderTarget.getColorTextureView();
+        GpuTextureView litematicaDepthTexture = this.litematicaRenderTarget.getDepthTextureView();
+        GpuTextureView gameColorTexture = this.mc.gameRenderer.mainRenderTarget().getColorTextureView();
+        GpuTextureView gameDepthTexture = this.mc.gameRenderer.mainRenderTarget().getDepthTextureView();
+        if (litematicaColorTexture == null) {
+            // ????
+            return;
+        }
+
+        GpuSampler sampler = RenderSystem.getSamplerCache()
+                .getClampToEdge(FilterMode.NEAREST);
+
+        try (RenderPass pass = RenderSystem.getDevice()
+                .createCommandEncoder()
+                .createRenderPass(() -> "combiner",
+                        gameColorTexture,
+                        Optional.empty())) {
+            pass.setPipeline(RenderSystem.getCompiledPipeline(LitematicaPipelines.COMBINE_PIPELINE));
+            pass.setUniform("LitematicaColorSampler", litematicaColorTexture, sampler);
+            pass.setUniform("LitematicaDepthSampler", litematicaDepthTexture, sampler);
+            pass.setUniform("GameColorSampler", gameColorTexture, sampler);
+            pass.setUniform("GameDepthSampler", gameDepthTexture, sampler);
+            pass.draw(3, 1, 0, 0);
+        }
+    }
+
     public void onEndFrame()
     {
 //        Litematica.LOGGER.error("LitematicaRenderer.onEndFrame()");
@@ -126,6 +171,39 @@ public class LitematicaRenderer
         {
             this.getWorldRenderer().getLegacyTerrainFixUniform().endFrame();
         }
+
+        RenderSystem.getDevice()
+                .createCommandEncoder()
+                .clearColorAndDepthTextures(
+                        this.litematicaRenderTarget.getColorTexture(), this.mc.gameRenderer.gameRenderState().guiRenderState.clearColorOverride, this.litematicaRenderTarget.getDepthTexture(), 0.0
+                );
+
+        FrameGraphBuilder frame = new FrameGraphBuilder();
+        target = frame.importExternal("litematica", this.litematicaRenderTarget);
+
+	    FeatureRenderDispatcher.PreparedFrame featureFrame = mc.gameRenderer.featureRenderDispatcher().prepareFrame(this.worldRenderer.getSubmitNodeStorage());
+        FramePass pass = frame.addPass("litematica");
+        target = pass.readsAndWrites(target);
+
+        pass.executes(() -> {
+            // this dont execute
+            try (RenderPass renderPass = RenderSystem.getDevice()
+                    .createCommandEncoder()
+                    .createRenderPass(
+                            () -> "litematica",
+                            this.litematicaRenderTarget.getColorTextureView(),
+                            Optional.empty(),
+                            this.litematicaRenderTarget.getDepthTextureView(),
+                            OptionalDouble.empty()
+                    )) {
+                featureFrame.executeSolid(renderPass);
+                featureFrame.executeTranslucent(renderPass);
+            }
+        });
+
+        frame.execute(((IMixinGameRenderer)mc.gameRenderer).litematica_getResourcePool());
+
+        featureFrame.close();
 
         // Why Iris?
         if (IrisCompat.isShaderActive())
@@ -139,6 +217,7 @@ public class LitematicaRenderer
 //        Litematica.LOGGER.error("LitematicaRenderer.onClose()");
         this.getWorldRenderer().clearLegacyTerrainFixUniform();
         this.getWorldRenderer().closeGpuSampler();
+        this.litematicaRenderTarget.destroyBuffers();
 
         // Why Iris?
         if (IrisCompat.isShaderActive())
@@ -167,6 +246,10 @@ public class LitematicaRenderer
 
             profiler.pop();
         }
+    }
+
+    public void onResize(int width, int height) {
+        this.litematicaRenderTarget.resize(width, height);
     }
 
 	public void updateCameraState(Camera camera, float tickProgress, CameraRenderState cameraState)
@@ -318,7 +401,7 @@ public class LitematicaRenderer
         if (this.renderPiecewiseBlocks)
         {
             // Use Saved Profiler later
-            this.getWorldRenderer().drawBlockLayerGroup(fb, group);
+            this.getWorldRenderer().drawBlockLayerGroup(this.litematicaRenderTarget, group);
         }
     }
 
@@ -418,4 +501,15 @@ public class LitematicaRenderer
         this.renderPiecewiseTileEntities = false;
         this.renderEntityDebugHitboxes = false;
     }
+
+	public RenderTarget getLitematicaRenderTarget() {
+		return this.litematicaRenderTarget;
+	}
+
+	public void blit() {
+//        GpuTextureView litematicaColorTexture = this.litematicaRenderTarget.getColorTextureView();
+//        this.mc.gameRenderer.mainRenderTarget().blitAndBlendToTexture(litematicaColorTexture, litematicaDepthTexture);
+
+//        Minecraft.getInstance().windowSurface().blitFromTexture(RenderSystem.getDevice().createCommandEncoder(), litematicaColorTexture);
+	}
 }

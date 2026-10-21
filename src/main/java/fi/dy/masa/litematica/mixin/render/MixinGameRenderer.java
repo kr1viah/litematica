@@ -28,4 +28,15 @@ public abstract class MixinGameRenderer
 //		if (IrisCompat.isShaderActive()) { return; }
 		LitematicaRenderer.getInstance().updateCameraState(this.mainCamera, deltaTracker.getGameTimeDeltaPartialTick(true), cameraState);
 	}
+
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
+	private void beforeClearDepth(CallbackInfo ci)
+	{
+		LitematicaRenderer.getInstance().beforeClearDepth();
+	}
+
+	@Inject(method = "resize", at = @At("TAIL"))
+	private void onResize(int width, int height, CallbackInfo ci) {
+		LitematicaRenderer.getInstance().onResize(width, height);
+	}
 }

@@ -1,5 +1,6 @@
 package fi.dy.masa.litematica.mixin.render;
 
+import com.mojang.blaze3d.resource.CrossFrameResourcePool;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,4 +14,7 @@ public interface IMixinGameRenderer
 
     @Accessor("renderBlockOutline")
     boolean litematica_isBlockOutlineEnabled();
+
+    @Accessor("resourcePool")
+    CrossFrameResourcePool litematica_getResourcePool();
 }

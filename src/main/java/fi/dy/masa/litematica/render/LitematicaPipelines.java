@@ -1,13 +1,16 @@
 package fi.dy.masa.litematica.render;
 
+import com.mojang.renderpearl.api.pipeline.*;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.ApiStatus;
-
-import com.mojang.renderpearl.api.pipeline.BindGroupLayout;
-import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 
 @ApiStatus.Internal
 public class LitematicaPipelines
 {
+	public static BindGroupLayout COMBINE_LAYOUT;
+	public static RenderPipeline COMBINE_PIPELINE;
+
 	// todo LEGACY_TERRAIN Snippet
     public static BindGroupLayout LEGACY_TERRAIN_GROUP;
 	public static RenderPipeline.Snippet LEGACY_TERRAIN_STAGE;

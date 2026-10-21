@@ -1,6 +1,8 @@
 package fi.dy.masa.litematica.render;
 
 import java.util.List;
+
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import org.joml.Matrix4fc;
 import org.jspecify.annotations.Nullable;
 
@@ -133,6 +135,8 @@ public interface IWorldSchematicRenderer
 	void clearWorldRenderStates();
 
 	void renderEntityDebugHitboxes(IEntityHitboxDebugRendererInvoker invoker, double cameraX, double cameraY, double cameraZ, DebugValueAccess debugValueAccess, Frustum frustum, float ticks);
+
+	SubmitNodeStorage getSubmitNodeStorage();
 
 	static int getLightmap(BlockAndTintGetter world, BlockPos pos)
 	{

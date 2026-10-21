@@ -419,7 +419,7 @@ public class OverlayRenderer
 
                 if (meshData != null)
                 {
-                    ctx.draw(meshData, false, true);
+                    ctx.draw(LitematicaRenderer.getInstance().getLitematicaRenderTarget(), meshData, false, true, false);
                     meshData.close();
                 }
 
@@ -440,7 +440,7 @@ public class OverlayRenderer
 
             if (meshData != null)
             {
-                ctx.draw(meshData, false, true);
+                ctx.draw(LitematicaRenderer.getInstance().getLitematicaRenderTarget(), meshData, false, true, false);
                 meshData.close();
             }
 
@@ -468,7 +468,7 @@ public class OverlayRenderer
 
                 if (meshData != null)
                 {
-                    ctx.draw(meshData, false, false);
+                    ctx.draw(LitematicaRenderer.getInstance().getLitematicaRenderTarget(), meshData, false, false, false);
                     meshData.close();
                 }
 

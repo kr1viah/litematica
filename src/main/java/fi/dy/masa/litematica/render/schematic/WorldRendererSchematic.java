@@ -4,7 +4,9 @@ import java.lang.Math;
 import java.util.*;
 import javax.annotation.Nullable;
 import com.google.common.collect.ImmutableList;
+import fi.dy.masa.litematica.render.LitematicaRenderer;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.minecraft.client.renderer.SubmitNodeStorage;
 import org.apache.logging.log4j.Logger;
 import org.joml.*;
 
@@ -76,7 +78,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import fi.dy.masa.malilib.gui.Message;
-import fi.dy.masa.malilib.render.RenderUtils;
 import fi.dy.masa.malilib.util.EntityUtils;
 import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.MathUtils;
@@ -104,6 +105,7 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
     private static final Logger LOGGER = Litematica.LOGGER;
     private final Minecraft mc;
     private final List<ChunkRendererSchematicVbo> renderInfos;
+    private final SubmitNodeStorage submitNodeStorage = new SubmitNodeStorage();
     private SchematicRenderState schematicRenderState;
     private Set<ChunkRendererSchematicVbo> chunksToUpdate;
     private WorldSchematic world;
@@ -924,6 +926,11 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
     }
 
     @Override
+    public SubmitNodeStorage getSubmitNodeStorage() {
+        return this.submitNodeStorage;
+    }
+
+    @Override
 	public void updateCameraState(Camera camera, float tickProgress, CameraRenderState cameraState)
 	{
 //        LOGGER.warn("[WorldRenderer] updateCameraState()");
@@ -1119,9 +1126,9 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
                 colorMod.set(rgba);
             }
 
-            RenderTarget mainFb = RenderUtils.mainTarget();
-            GpuTextureView texture1 = mainFb.getColorTextureView();
-            GpuTextureView texture2 = mainFb.hasDepth() ? mainFb.getDepthTextureView() : null;
+            RenderTarget mainFb = LitematicaRenderer.getInstance().getLitematicaRenderTarget();
+            GpuTextureView colorTexture = mainFb.getColorTextureView();
+            GpuTextureView depthTexture = mainFb.hasDepth() ? mainFb.getDepthTextureView() : null;
             RenderSystem.AutoStorageIndexBuffer shapeIndexBuffer = RenderSystem.getSequentialBuffer(type.topology());
             GpuBuffer indexBuffer;
             IndexType indexType;
@@ -1156,8 +1163,8 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
             try (RenderPass pass = RenderSystem.getDevice()
                                                .createCommandEncoder()
                                                .createRenderPass(() -> "litematica:drawInternal/schematic_overlay",
-                                                                 texture1, Optional.empty(),
-                                                                 texture2, OptionalDouble.empty()))
+                                                                 colorTexture, Optional.empty(),
+                                                                 depthTexture, OptionalDouble.empty()))
             {
                 pass.setPipeline(RenderSystem.getCompiledPipeline(pipeline));
                 RenderSystem.bindDefaultUniforms(pass);
@@ -1408,7 +1415,7 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
 		{
             if (state != null)      // This should never be NULL
             {
-                this.getEntityRenderer().submit(state, this.getSchematicRenderState().cameraState, state.x - cameraX, state.y - cameraY, state.z - cameraZ, matrices, queue);
+                this.getEntityRenderer().submit(state, this.getSchematicRenderState().cameraState, state.x - cameraX, state.y - cameraY, state.z - cameraZ, matrices, this.submitNodeStorage);
             }
 		}
 
@@ -1568,7 +1575,7 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
                 BlockPos pos = state.blockPos;
                 matrices.pushPose();
                 matrices.translate(pos.getX() - cameraX, pos.getY() - cameraY, pos.getZ() - cameraZ);
-                this.getBlockEntityRenderer().submit(state, matrices, queue, this.getSchematicRenderState().cameraState);
+                this.getBlockEntityRenderer().submit(state, matrices, this.submitNodeStorage, this.getSchematicRenderState().cameraState);
                 matrices.popPose();
             }
 		}

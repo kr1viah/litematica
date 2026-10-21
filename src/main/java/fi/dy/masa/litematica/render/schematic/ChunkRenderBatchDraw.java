@@ -86,7 +86,7 @@ public record ChunkRenderBatchDraw(
 					}
 					else
 					{
-						if (this.renderTranslucent())
+						if (this.renderTranslucent() | false)
 						{
 							pipeline = this.renderCollidingBlocks()
 							           ? ChunkRenderLayers.PIPELINE_MAP.get(ChunkSectionLayer.TRANSLUCENT).getRight()

@@ -42,6 +42,22 @@ public abstract class MixinRenderPipelines
 	@Inject(method = "<clinit>", at = @At("TAIL"))
 	private static void litematica_onRegisterPipelines(CallbackInfo ci)
 	{
+		LitematicaPipelines.COMBINE_LAYOUT = BindGroupLayout.builder()
+				.withUniform("LitematicaColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+				.withUniform("LitematicaDepthSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+				.withUniform("GameColorSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+				.withUniform("GameDepthSampler", UniformType.COMBINED_IMAGE_SAMPLER)
+				.build();
+
+		LitematicaPipelines.COMBINE_PIPELINE = register(RenderPipeline.builder()
+				.withLocation(Identifier.fromNamespaceAndPath("litematica", "pipeline/combine"))
+				.withVertexShader("core/screenquad")
+				.withFragmentShader(Identifier.fromNamespaceAndPath("litematica", "core/combine"))
+				.withBindGroupLayout(LitematicaPipelines.COMBINE_LAYOUT)
+				.withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
+				.withColorTargetState(ColorTargetState.DEFAULT)
+				.build());
+
 		// todo LEGACY_TERRAIN Snippet
 		LitematicaPipelines.LEGACY_TERRAIN_STAGE =
 				RenderPipeline.builder()
