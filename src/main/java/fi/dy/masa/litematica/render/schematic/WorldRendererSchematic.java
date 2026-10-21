@@ -77,15 +77,11 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import fi.dy.masa.malilib.gui.Message;
 import fi.dy.masa.malilib.util.EntityUtils;
-import fi.dy.masa.malilib.util.InfoUtils;
 import fi.dy.masa.malilib.util.MathUtils;
 import fi.dy.masa.malilib.util.position.LayerRange;
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
-import fi.dy.masa.litematica.compat.iris.IrisRenderingFix;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.data.DataManager;
@@ -818,12 +814,6 @@ public class WorldRendererSchematic implements IWorldSchematicRenderer
             RenderSystem.setShaderFog(this.getEmptyFogBuffer());
 //            this.closeGpuSampler();
             GpuSampler sampler = this.getGpuSampler();
-
-            if (IrisCompat.isShaderActive() && !IrisRenderingFix.INSTANCE.wasWarned)
-            {
-                InfoUtils.showGuiOrInGameMessage(Message.MessageType.WARNING, "litematica.message.warn.shaders_on");
-                IrisRenderingFix.INSTANCE.wasWarned = true;
-            }
 
 //            this.dumpSampler(sampler);
 

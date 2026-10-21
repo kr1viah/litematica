@@ -5,6 +5,7 @@
     "compatibilityLevel": "JAVA_25",
     "minVersion": "0.8",
     "mixins": [
+        "TempMixin",
         "block.IMixinAbstractBlock",
         "block.IMixinFenceGateBlock",
         "block.IMixinRedstoneWireBlock",

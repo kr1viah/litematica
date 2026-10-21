@@ -6,7 +6,6 @@ import org.apache.logging.log4j.Logger;
 import net.fabricmc.api.ModInitializer;
 
 import fi.dy.masa.malilib.event.InitializationHandler;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
 import fi.dy.masa.litematica.compat.voxy.VoxyCompat;
 import fi.dy.masa.litematica.config.Configs;
 
@@ -17,7 +16,6 @@ public class Litematica implements ModInitializer
     @Override
     public void onInitialize()
     {
-        IrisCompat.register();
         VoxyCompat.register();
         InitializationHandler.getInstance().registerInitializationHandler(new InitHandler());
     }

@@ -33,7 +33,6 @@ import net.minecraft.world.phys.Vec3;
 
 import fi.dy.masa.litematica.Litematica;
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
 import fi.dy.masa.litematica.config.Configs;
 import fi.dy.masa.litematica.config.Hotkeys;
 import fi.dy.masa.litematica.render.schematic.WorldRendererSchematic;
@@ -204,12 +203,6 @@ public class LitematicaRenderer
         frame.execute(((IMixinGameRenderer)mc.gameRenderer).litematica_getResourcePool());
 
         featureFrame.close();
-
-        // Why Iris?
-        if (IrisCompat.isShaderActive())
-        {
-            this.getWorldRenderer().getFogRenderer().endFrame();        // (This is fixing the Vanilla Fog Renderer, btw)
-        }
     }
 
     public void onClose()
@@ -218,12 +211,6 @@ public class LitematicaRenderer
         this.getWorldRenderer().clearLegacyTerrainFixUniform();
         this.getWorldRenderer().closeGpuSampler();
         this.litematicaRenderTarget.destroyBuffers();
-
-        // Why Iris?
-        if (IrisCompat.isShaderActive())
-        {
-            this.getWorldRenderer().getFogRenderer().close();           // (This is fixing the Vanilla Fog Renderer, btw)
-        }
     }
 
     public void renderSchematicOverlays(Camera camera, ProfilerFiller profiler)
@@ -238,11 +225,7 @@ public class LitematicaRenderer
 
             profiler.push("schematic_overlay");
 
-            if (!IrisCompat.isShadowPassActive())
-            {
-                // this.getCamera()
-                this.getWorldRenderer().renderBlockOverlays(camera, lineWidth, profiler);
-            }
+            this.getWorldRenderer().renderBlockOverlays(camera, lineWidth, profiler);
 
             profiler.pop();
         }

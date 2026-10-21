@@ -14,7 +14,6 @@ import net.minecraft.client.TextureFilteringMethod;
 import net.minecraft.client.renderer.MappableRingBuffer;
 
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
 
 public class LegacyTerrainFixUniform implements AutoCloseable
 {
@@ -51,11 +50,10 @@ public class LegacyTerrainFixUniform implements AutoCloseable
 		}
 
 		final int useRGSS = Minecraft.getInstance().options.textureFiltering().get() == TextureFilteringMethod.RGSS ? 1 : 0;
-		final int hasShadersOn = IrisCompat.isShaderActive() ? 1 : 0;
 
 		try (GpuBufferSlice.MappedView mappedView = this.ubo.currentBuffer().map(false, true))
 		{
-			this.fillBuffer(mappedView.data(), 0, atlasWidth, atlasHeight, chunkVisibility, useRGSS, hasShadersOn);
+			this.fillBuffer(mappedView.data(), 0, atlasWidth, atlasHeight, chunkVisibility, useRGSS, 0);
 		}
 	}
 

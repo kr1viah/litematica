@@ -29,7 +29,7 @@ public abstract class MixinGameRenderer
 		LitematicaRenderer.getInstance().updateCameraState(this.mainCamera, deltaTracker.getGameTimeDeltaPartialTick(true), cameraState);
 	}
 
-	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/renderpearl/api/commands/CommandEncoder;clearDepthTexture(Lcom/mojang/renderpearl/api/textures/GpuTexture;D)V"))
+	@Inject(method = "render3dHud", at = @At("HEAD"))
 	private void beforeClearDepth(CallbackInfo ci)
 	{
 		LitematicaRenderer.getInstance().beforeClearDepth();

@@ -17,7 +17,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import fi.dy.masa.litematica.Reference;
-import fi.dy.masa.litematica.compat.iris.IrisCompat;
 import fi.dy.masa.litematica.render.LitematicaPipelines;
 
 @ApiStatus.Internal
@@ -135,8 +134,5 @@ public abstract class MixinRenderPipelines
 				                       .withShaderDefine("ALPHA_CUTOUT", 0.1F)
 				                       .withDepthStencilState(new DepthStencilState(CompareOp.GREATER_THAN_OR_EQUAL, true, 0.3f, 0.6f))
 				                       .build());
-
-		// todo -- Try registering with Iris.
-		IrisCompat.registerPipelines();
 	}
 }

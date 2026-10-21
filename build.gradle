@@ -33,10 +33,12 @@ dependencies {
 //	compileOnly fabricApi.module("fabric-api-base", project.fabric_api_version)
 //	compileOnly fabricApi.module("fabric-networking-api-v1", project.fabric_api_version)
 //	compileOnly fabricApi.module("fabric-resource-loader-v1", project.fabric_api_version)
+	include(implementation("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"))
 	include(implementation("me.fallenbreath:conditional-mixin-fabric:${project.conditionalmixin_version}"))
 
-	compileOnly "com.terraformersmc:modmenu:${project.mod_menu_version}"
-	compileOnly "maven.modrinth:iris:${project.iris_version}+${project.iris_mc_version}-fabric"
+	implementation "com.terraformersmc:modmenu:${project.mod_menu_version}"
+	implementation "maven.modrinth:iris:${project.iris_version}+${project.iris_mc_version}-fabric"
+	implementation "maven.modrinth:sodium:mc${project.sodium_mc_version}-${project.sodium_version}-fabric"
 //	runtimeOnly 'me.fallenbreath:mixin-auditor:0.2.0-u'
 }
 
