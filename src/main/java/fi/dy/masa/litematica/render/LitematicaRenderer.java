@@ -13,6 +13,8 @@ import com.mojang.renderpearl.api.textures.GpuTextureView;
 import fi.dy.masa.litematica.mixin.render.IMixinGameRenderer;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 import org.apache.logging.log4j.Logger;
+import org.joml.Matrix4f;
+import org.joml.Matrix4fStack;
 import org.joml.Matrix4fc;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
@@ -134,6 +136,42 @@ public class LitematicaRenderer
 
     public void beforeClearDepth() {
         if (mc.level == null) { return; }
+
+        Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
+        modelViewStack.pushMatrix();
+        modelViewStack.mul(camera.getViewRotationMatrix(new Matrix4f()));
+
+        FrameGraphBuilder frame = new FrameGraphBuilder();
+        target = frame.importExternal("litematica", this.litematicaRenderTarget);
+
+        FeatureRenderDispatcher.PreparedFrame featureFrame = mc.gameRenderer.featureRenderDispatcher().prepareFrame(this.worldRenderer.getSubmitNodeStorage());
+        FramePass pass = frame.addPass("litematica");
+        target = pass.readsAndWrites(target);
+
+        pass.executes(() -> {
+            try (RenderPass renderPass = RenderSystem.getDevice()
+                    .createCommandEncoder()
+                    .createRenderPass(
+                            () -> "litematica",
+                            this.litematicaRenderTarget.getColorTextureView(),
+                            Optional.empty(),
+                            this.litematicaRenderTarget.getDepthTextureView(),
+                            OptionalDouble.empty()
+                    )) {
+                featureFrame.executeSolid(renderPass);
+            }
+        });
+
+        frame.execute(((IMixinGameRenderer)mc.gameRenderer).litematica_getResourcePool());
+
+        featureFrame.close();
+
+        combineIt();
+
+        modelViewStack.popMatrix();
+    }
+
+    private void combineIt() {
         GpuTextureView litematicaColorTexture = this.litematicaRenderTarget.getColorTextureView();
         GpuTextureView litematicaDepthTexture = this.litematicaRenderTarget.getDepthTextureView();
         GpuTextureView gameColorTexture = this.mc.gameRenderer.mainRenderTarget().getColorTextureView();
@@ -176,33 +214,6 @@ public class LitematicaRenderer
                 .clearColorAndDepthTextures(
                         this.litematicaRenderTarget.getColorTexture(), this.mc.gameRenderer.gameRenderState().guiRenderState.clearColorOverride, this.litematicaRenderTarget.getDepthTexture(), 0.0
                 );
-
-        FrameGraphBuilder frame = new FrameGraphBuilder();
-        target = frame.importExternal("litematica", this.litematicaRenderTarget);
-
-	    FeatureRenderDispatcher.PreparedFrame featureFrame = mc.gameRenderer.featureRenderDispatcher().prepareFrame(this.worldRenderer.getSubmitNodeStorage());
-        FramePass pass = frame.addPass("litematica");
-        target = pass.readsAndWrites(target);
-
-        pass.executes(() -> {
-            // this dont execute
-            try (RenderPass renderPass = RenderSystem.getDevice()
-                    .createCommandEncoder()
-                    .createRenderPass(
-                            () -> "litematica",
-                            this.litematicaRenderTarget.getColorTextureView(),
-                            Optional.empty(),
-                            this.litematicaRenderTarget.getDepthTextureView(),
-                            OptionalDouble.empty()
-                    )) {
-                featureFrame.executeSolid(renderPass);
-                featureFrame.executeTranslucent(renderPass);
-            }
-        });
-
-        frame.execute(((IMixinGameRenderer)mc.gameRenderer).litematica_getResourcePool());
-
-        featureFrame.close();
     }
 
     public void onClose()
